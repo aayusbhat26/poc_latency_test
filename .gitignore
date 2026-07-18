@@ -16,3 +16,14 @@ logs/
 __pycache__/
 *.pyc
 *.pyo
+
+# Frontend (Next.js)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+
+# Environment Variables
+.env
+.env.*
+!.env.example

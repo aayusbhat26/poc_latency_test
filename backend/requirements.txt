@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+duckdb
+deltalake
+pandas
+pydantic
