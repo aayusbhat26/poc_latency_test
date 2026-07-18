@@ -9,6 +9,7 @@ data_lake/
 
 # Ignore the locally generated execution logs
 *.txt
+!requirements.txt
 logs/
 
 # Standard Python Cache
