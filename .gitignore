@@ -1,0 +1,17 @@
+# Ignore the Python Virtual Environment
+venv/
+
+# Ignore the locally generated Data Lake and Delta Tables
+data_lake/
+
+# Ignore the locally generated raw data and initialization files
+*.json
+
+# Ignore the locally generated execution logs
+*.txt
+logs/
+
+# Standard Python Cache
+__pycache__/
+*.pyc
+*.pyo
