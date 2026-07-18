@@ -18,7 +18,7 @@ jobs:
           
       - name: Install Dependencies
         run: |
-          pip install pyspark==3.5.0 delta-spark==3.1.0 huggingface_hub
+          pip install -r requirements.txt
           
       - name: Execute Master Pipeline
         env:
