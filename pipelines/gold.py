@@ -42,8 +42,8 @@ def run(spark):
     # 5. fact_hourly_telemetry
     spark.sql("""
         SELECT Device_ID, Date, Hour_of_Day, Operational_Shift,
-            ROUND(AVG(Entering_Temp), 2) as Avg_Entering_Temp,
-            ROUND(AVG(Leaving_Temp), 2) as Avg_Leaving_Temp,
+            ROUND(AVG(Entering_Chilled_Water_Temperature_Sensor), 2) as Avg_Entering_Temp,
+            ROUND(AVG(Leaving_Chilled_Water_Temperature_Sensor), 2) as Avg_Leaving_Temp,
             ROUND(AVG(System_Power_Consumption_kW), 2) as Avg_Power_kW,
             ROUND(SUM(Estimated_Hourly_Cost_USD), 2) as Total_Cost_USD
         FROM silver_hvac GROUP BY Device_ID, Date, Hour_of_Day, Operational_Shift
