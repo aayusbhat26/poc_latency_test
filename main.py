@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import shutil
 from datetime import datetime
 from pyspark.sql import SparkSession
 from delta import configure_spark_with_delta_pip
@@ -26,8 +27,11 @@ def upload_all_to_hf(bucket_id):
     # 2. Add the text log file to the upload batch
     upload_list.append(("pipeline_execution.txt", "logs/pipeline_execution.txt"))
     
-    # 3. Add the real-time initialization file to ensure the folder is created
-    upload_list.append(("real_time_init.json", "real_time/real_time_init.json"))
+    # 3. Add the real-time data dump (or fallback to dummy)
+    if os.path.exists("real_time_data.json"):
+        upload_list.append(("real_time_data.json", "real_time/real_time_data.json"))
+    else:
+        upload_list.append(("real_time_init.json", "real_time/real_time_init.json"))
     
     print(f"Uploading {len(upload_list)} files to Hugging Face...")
     batch_bucket_files(bucket_id, add=upload_list)
@@ -48,14 +52,35 @@ def main():
         
     bucket_id = "aayushbhat26/poc_testing_latency"
     
-    # --- PHASE 1: GENERATION ---
-    print("[1/5] Generating JSON data...")
+    # ====================================================================
+    # PHASE 1: Data Generation (Simulating incoming IoT Stream)
+    # ====================================================================
+    print("\n[PHASE 1] Generating Raw HVAC Telemetry Data...")
     gen_start = time.time()
-    raw_json_file = generate_dirty_hvac_data(100000)
+    import pipelines.generator_and_upload as gen
     
-    # Generate the dummy file for real-time folder creation
+    # Generate 100,000 records of dirty data
+    raw_json_file = gen.generate_dirty_hvac_data(100000)
+    
+    # Simulate uploading the raw data to the Hugging Face Data Lake
+    print("Uploading raw data to Data Lake (Hugging Face Bucket)...")
+    if not os.path.exists("./data_lake/raw"):
+        os.makedirs("./data_lake/raw")
+    shutil.copy(raw_json_file, "./data_lake/raw/hvac_batch_latest.json")
+    
+    # Generate the dummy file for real-time folder creation fallback
     with open("real_time_init.json", "w") as f:
         f.write('{"status": "ready", "message": "Forces the real_time folder creation in the object store."}')
+        
+    # ====================================================================
+    # PHASE 1.5: Dump Real-Time Stream to JSON (For Hugging Face storage)
+    # ====================================================================
+    print("\n[PHASE 1.5] Draining real-time stream for object storage backup...")
+    try:
+        import kafka_to_batch
+        kafka_to_batch.fetch_all_messages()
+    except Exception as e:
+        print(f"Failed to drain Kafka stream: {e}")
         
     log_data.append(f"[Data Generation] Time: {round(time.time() - gen_start, 2)}s")
     

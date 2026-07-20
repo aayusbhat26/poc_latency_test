@@ -27,3 +27,8 @@ frontend/build/
 .env
 .env.*
 !.env.example
+
+# Kafka Certificates
+*.pem
+*.key
+*.cert

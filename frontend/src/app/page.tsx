@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Zap, Activity, DollarSign, AlertTriangle } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, AreaChart, Area } from "recharts";
+import LiveCharts from "@/components/LiveCharts";
 
 export default function DashboardPage() {
   const [metrics, setMetrics] = useState<any>(null);
@@ -53,6 +54,10 @@ export default function DashboardPage() {
             Loaded in {latency} ms
           </Badge>
         )}
+      </div>
+
+      <div className="mb-8 border-b border-border pb-8">
+        <LiveCharts />
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
