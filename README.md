@@ -42,7 +42,7 @@ The point of the repo is the timing. Every stage writes its own duration to `pip
               │
               ▼
         data_lake/gold         4 dimension tables + 11 fact and mart tables
-              │
+              │                 Z-Ordering on the tables the API filters
               ▼
      ┌────────────────┐        Hugging Face bucket (object store)
      │ backend/main.py│ ──────► upload + download via sync_bucket.py
@@ -87,6 +87,8 @@ This was a deliberate design decision, not an accident. A demo that dies when a 
 - `Cooling_Capacity_Delta` and the evaporator and condenser approach temperatures
 
 **Gold** publishes 15 tables: `dim_device`, `dim_time`, `dim_fault_codes`, `dim_status_flags`, plus `fact_hourly_telemetry`, `fact_fault_events` and nine business marts covering daily cost, shift performance, SLA breaches, compressor health, environmental compliance, pump maintenance, cooling efficiency, valve operations and filter diagnostics.
+
+**Z-Ordering** runs on the ten fact and mart tables the read path filters on, clustered on the same columns the predicates use: `Device_ID` and `Date` for the telemetry and device-scoped marts, `Date` and `Operational_Shift` for the shift-scoped one. Delta then skips Parquet files whose range cannot match, so a filtered query touches fewer files. At this data volume the tables are small enough to land in one file each, so the compaction is mostly a no-op here. The pattern is what carries to a table with real history.
 
 ## The dirty data is the point
 
@@ -134,6 +136,6 @@ The Aiven service credentials (`ca.pem`, `service.cert`, `service.key`) go in th
 
 ## What is real and what is not
 
-Real: the Kafka producer and both consumers, the Delta Lake medallion pipeline, the DuckDB serving path, the latency instrumentation, the CI workflow.
+Real: the Kafka producer and both consumers, the Delta Lake medallion pipeline with Z-Ordering, the DuckDB serving path, the latency instrumentation, the CI workflow.
 
 Simulated: the telemetry itself. The values are random draws with deliberate defects, and the cost model is a flat 0.12 per kWh. The schema, the layer contracts and the failure handling are the parts worth reading.

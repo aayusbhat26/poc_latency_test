@@ -1,4 +1,38 @@
+import os
 import time
+
+GOLD_DIR = "./data_lake/gold"
+
+# Clustering keys for the tables the read path filters on. Delta skips files
+# whose Z-Order range cannot match the predicate, so these are the columns
+# the dashboard and SQL console actually filter by.
+ZORDER_KEYS = {
+    "fact_hourly_telemetry": ("Device_ID", "Date"),
+    "fact_fault_events": ("Device_ID",),
+    "mart_daily_costs": ("Date", "Device_ID"),
+    "mart_sla_breach_summary": ("Device_ID", "Date"),
+    "mart_compressor_health": ("Device_ID", "Date"),
+    "mart_environmental_compliance": ("Date", "Operational_Shift"),
+    "mart_pump_maintenance": ("Device_ID",),
+    "mart_cooling_efficiency": ("Device_ID", "Date"),
+    "mart_valve_operations": ("Device_ID",),
+    "mart_filter_diagnostics": ("Device_ID", "Date"),
+}
+
+
+def _zorder_gold_tables(spark):
+    for table, columns in ZORDER_KEYS.items():
+        path = os.path.abspath(os.path.join(GOLD_DIR, table)).replace("\\", "/")
+        keys = ", ".join(f"`{column}`" for column in columns)
+        try:
+            spark.sql(f"OPTIMIZE delta.`{path}` ZORDER BY ({keys})")
+            print(f"[Z-ORDER] {table} clustered on {keys}")
+        except Exception as exc:
+            # The tables are already written and correct. A failed compaction
+            # is a performance miss, not a data problem, so it must not take
+            # the pipeline down.
+            print(f"[Z-ORDER] skipped {table}: {exc}")
+
 
 def run(spark):
     start_time = time.time()
@@ -112,5 +146,7 @@ def run(spark):
         SELECT Device_ID, Date, ROUND(MAX(Filter_Pressure_Drop_Pa), 2) as Max_Pressure_Drop, SUM(CASE WHEN Maintenance_Recommendation = 'Replace Filter' THEN 1 ELSE 0 END) as Filter_Alerts
         FROM silver_hvac GROUP BY Device_ID, Date
     """).write.format("delta").mode("overwrite").save("./data_lake/gold/mart_filter_diagnostics")
+
+    _zorder_gold_tables(spark)
 
     return time.time() - start_time
