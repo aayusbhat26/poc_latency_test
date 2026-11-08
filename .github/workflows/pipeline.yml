@@ -9,7 +9,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
+      # Spark 3.5.0 dies on the JDK the runner image now ships with:
+      # "getSubject is not supported" comes from JDK 24, which Spark 3.5
+      # predates. Pin Java 17, which Spark 3.5 supports.
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:

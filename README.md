@@ -134,6 +134,8 @@ The Aiven service credentials (`ca.pem`, `service.cert`, `service.key`) go in th
 
 `.github/workflows/pipeline.yml` runs the whole medallion pipeline on GitHub Actions with `workflow_dispatch`. It needs the `HF_TOKEN` secret and nothing else, because the Kafka path falls back to generated data.
 
+The workflow pins Java 17. Spark 3.5 does not start on the JDK 24 image the runner now ships with, it fails with `getSubject is not supported` before the first stage runs.
+
 ## What is real and what is not
 
 Real: the Kafka producer and both consumers, the Delta Lake medallion pipeline with Z-Ordering, the DuckDB serving path, the latency instrumentation, the CI workflow.
